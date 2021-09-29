@@ -12,7 +12,7 @@ After releasing [ThreadStackSpoofer](https://github.com/mgeeky/ThreadStackSpoofe
 Beforewards I was pretty sure the community already know how to encrypt/decrypt their payloads and flip their memory protections to simply evade memory scanners looking for anomalous executable regions.
 Questions proven otherwise so I decided to release this unweaponized PoC to document yet another evasion strategy and offer sample implementation for the community to work with.
 
-This PoC is a demonstration of rather simple technique, already known to the offensive community (so I'm not bringin anything new here really) in hope to disclose secrecy behind magic showed by commercial frameworks such as [MDSec's Nighthawk C2](https://www.mdsec.co.uk/nighthawk/) that demonstrate their evasion capabilities targeting both aforementioned memory scanners.
+This PoC is a demonstration of rather simple technique, already known to the offensive community (so I'm not bringin anything new here really) in hope to disclose secrecy behind magic showed by some commercial frameworks that demonstrate their evasion capabilities targeting both aforementioned memory scanners.
 
 
 **Here's a comparison:**
