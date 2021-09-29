@@ -23,7 +23,7 @@ Here's a comparison:
 ![comparison](images/comparison.png)
 
 
-### Notice
+### It's not a novel technique
 
 The technique is not brand new, nothing that I've devised myself. Merely an implementation showing the concept and its practical utilisation to let our Offensive Security community catch up on offering made by commercial C2 frameworks. 
 
