@@ -27,7 +27,7 @@ Here's a comparison:
 
 The technique is not brand new, nothing that I've devised myself. Merely an implementation showing the concept and its practical utilisation to let our Offensive Security community catch up on offering made by commercial C2 frameworks. 
 
-Actually, I've been introduced to the idea of flipping shellcode's memory protection through the work of [**Josh Lospinoso**](https://github.com/JLospinoso) in his amazing [Gargoyle](https://github.com/JLospinoso/gargoyle).
+Actually, I've been introduced to the idea of flipping shellcode's memory protection couple of years back through the work of [**Josh Lospinoso**](https://github.com/JLospinoso) in his amazing [Gargoyle](https://github.com/JLospinoso/gargoyle).
 
 Here's more background:
 - [gargoyle, a memory scanning evasion technique](https://lospi.net/security/assembly/c/cpp/developing/software/2017/03/04/gargoyle-memory-analysis-evasion.html)
