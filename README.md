@@ -14,9 +14,6 @@ Questions proven otherwise so I decided to release this unweaponized PoC to docu
 
 This PoC is a demonstration of rather simple technique, already known to the offensive community (so I'm not bringin anything new here really) in hope to disclose secrecy behind magic showed by commercial frameworks such as [MDSec's Nighthawk C2](https://www.mdsec.co.uk/nighthawk/) that demonstrate their evasion capabilities targeting both aforementioned memory scanners.
 
-[Nighthawk - Moneta Evasion](https://vimeo.com/581308411)
-[Nighthawk - Pe-Sieve Evasion](https://vimeo.com/581325306)
-
 
 ## How it works?
 
@@ -76,6 +73,10 @@ Now the third, most interesting from perspective of this implementation, use cas
 
 Apart from the first IOC, considered somewhat _false positive_, we see a new one pointing that `kernel32.dll` memory was modified. 
 However, no `Abnormal private executable memory` IOC this time. Our fluctuation (repeated encryption/decryption and memory protections flipping is active).
+
+And for the record, `pe-sieve` has no issues with our fluctuating shellcode as well:
+
+![pe-sieve](images/pe-sieve.png)
 
 So we're able to see already that there are no clear references pointing back to our shellcode, at least memory IOC-wise. But what about that modified `kernel32` IOC?
 
