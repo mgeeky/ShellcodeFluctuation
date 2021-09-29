@@ -73,15 +73,17 @@ Usage: ShellcodeFluctuation.exe <shellcode> <fluctuate>
         1 - Inject shellcode and start fluctuating its memory.
 ```
 
-### Moneta False Positive
+### Moneta (seemingly) False Positive
 
 So firstly we'll see what `Moneta64` scanner thinks about process that does nothing dodgy and simply resorts to run an infinite loop:
 
 ![moneta false positive](images/false-positive.png)
 
-As we can see there's some **false positive** allegdly detecting `Mismatching PEB module` / `Phantom image`. 
+As we can see there's some **false positive** (at least how I consider it) allegdly detecting `Mismatching PEB module` / `Phantom image`. 
 The memory boundaries point at the `ShellcodeFluctuate.exe` module itself and could indicate that this module however being of `MEM_IMAGE` type, is not linked in process' PEB - which is unsual and sounds rather odd.
 The reason for this IOC is not known to me and I didn't attempt to understand it better, yet it isn't something we should be concerned about really.
+
+If anyone knows what's the reason for this detection, I'd be very curious to hear! Please do reach out.
 
 ### Not Encrypted Beacon
 
