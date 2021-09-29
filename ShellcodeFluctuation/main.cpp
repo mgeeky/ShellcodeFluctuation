@@ -95,7 +95,9 @@ void initializeShellcodeFluctuation(const LPVOID caller)
             if (reinterpret_cast<uintptr_t>(caller) > reinterpret_cast<uintptr_t>(mbi.BaseAddress)
                 && reinterpret_cast<uintptr_t>(caller) < (reinterpret_cast<uintptr_t>(mbi.BaseAddress) + mbi.RegionSize))
             {
+                //
                 // Store memory boundary of our shellcode somewhere globally.
+                //
                 g_fluctuationData.shellcodeAddr = mbi.BaseAddress;
                 g_fluctuationData.shellcodeSize = mbi.RegionSize;
                 g_fluctuationData.protect = mbi.Protect;
@@ -105,7 +107,9 @@ void initializeShellcodeFluctuation(const LPVOID caller)
                 std::mt19937 rng(dev());
                 std::uniform_int_distribution<std::mt19937::result_type> dist4GB(0, 0xffffffff);
 
+                //
                 // Use random 32bit key for XORing.
+                //
                 g_fluctuationData.encodeKey = dist4GB(rng);
 
                 log("[+] Fluctuation initialized.");
