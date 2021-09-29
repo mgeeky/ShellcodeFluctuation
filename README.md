@@ -114,7 +114,7 @@ Firstly, we'll dump mentioned memory region - being `.text` (code) section of `k
 
 We dump code section of allegedly modified kernel32 and then we do the same for the kernel32 running in process that did not modify that area.
 
-Having acquired two dumps, we can then [compare them byte-wise](https://github.com/mgeeky/expdevBadChars) to look for any inconsitencies:
+Having acquired two dumps, we can then compare them byte-wise (using my [expdevBadChars](https://github.com/mgeeky/expdevBadChars)) to look for any inconsitencies:
 
 ![bindiff](images/bindiff0.png)
 
