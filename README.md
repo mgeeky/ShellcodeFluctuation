@@ -23,6 +23,12 @@ Here's a comparison:
 ![comparison](images/comparison.png)
 
 
+**Notice:** The technique is not brand new, nothing that I've devised myself. Merely an implementation showing the concept and its practical utilisation to let our Offensive Security community catch up on offering made by commercial C2 frameworks. 
+
+Actually, I've been introduced to the idea of flipping shellcode's memory protection through the work of [**Josh Lospinoso**](https://github.com/JLospinoso) in his amazing [Gargoyle](https://github.com/JLospinoso/gargoyle).
+
+
+
 ## How it works?
 
 This program performs self-injection shellcode (roughly via classic `VirtualAlloc` + `memcpy` + `CreateThread`). 
