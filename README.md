@@ -15,10 +15,10 @@ Questions proven otherwise so I decided to release this unweaponized PoC to docu
 This PoC is a demonstration of rather simple technique, already known to the offensive community (so I'm not bringin anything new here really) in hope to disclose secrecy behind magic showed by commercial frameworks such as [MDSec's Nighthawk C2](https://www.mdsec.co.uk/nighthawk/) that demonstrate their evasion capabilities targeting both aforementioned memory scanners.
 
 
-Here's a comparison:
+**Here's a comparison:**
 
 1. Beacon not encrypted
-2. Beacon encrypted
+2. **Beacon encrypted** (_fluctuating_)
 
 ![comparison](images/comparison.png)
 
