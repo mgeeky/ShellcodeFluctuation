@@ -75,6 +75,10 @@ Usage: ShellcodeFluctuation.exe <shellcode> <fluctuate>
 
 ### Moneta (seemingly) False Positive
 
+```
+C:\> ShellcodeFluctuation.exe beacon64.bin -1
+```
+
 So firstly we'll see what `Moneta64` scanner thinks about process that does nothing dodgy and simply resorts to run an infinite loop:
 
 ![moneta false positive](images/false-positive.png)
@@ -87,6 +91,10 @@ If anyone knows what's the reason for this detection, I'd be very curious to hea
 
 ### Not Encrypted Beacon
 
+```
+C:\> ShellcodeFluctuation.exe beacon64.bin 0
+```
+
 The second use case presents Memory IOCs of a Beacon operating within our process, which does not utilise any sorts of customised `Artifact Kits`, `User-Defined Reflective Loaders` (such as my [`ElusiveMice`](https://github.com/mgeeky/ElusiveMice)), neither any initial actions that would spoil our results. 
 
 ![moneta not encrypted](images/not-encrypted.png)
@@ -95,6 +103,10 @@ We can see that `Moneta64` correctly recognizes `Abnormal private executable mem
 That's really strong Memory IOC exposing our shellcode for getting dumped and analysed by automated scanners. Not cool.
 
 ### Encrypted Beacon
+
+```
+C:\> ShellcodeFluctuation.exe beacon64.bin 1
+```
 
 Now the third, most interesting from perspective of this implementation, use case being _fluctuating_ Beacon.
 
