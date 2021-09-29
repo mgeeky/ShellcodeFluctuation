@@ -115,9 +115,9 @@ Now the third, most interesting from perspective of this implementation, use cas
 Apart from the first IOC, considered somewhat _false positive_, we see a new one pointing that `kernel32.dll` memory was modified. 
 However, no `Abnormal private executable memory` IOC this time. Our fluctuation (repeated encryption/decryption and memory protections flipping is active).
 
-And for the record, `pe-sieve` has no issues with our fluctuating shellcode as well:
+And for the record, `pe-sieve` also detects implanted PE when used with `/data 3` option (unless this option is given, no detection will be made):
 
-![pe-sieve](images/pe-sieve2.png)
+![pe-sieve](images/pe-sieve3.png)
 
 So we're able to see already that there are no clear references pointing back to our shellcode, at least memory IOC-wise. But what about that modified `kernel32` IOC?
 
