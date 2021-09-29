@@ -198,6 +198,13 @@ When that argument's on the table I need to remind, that, the commercial framewo
 
 However there is a notion of [_Sleep Mask_](https://www.cobaltstrike.com/help-sleep-mask-kit) introduced to Cobalt Strike, the size restrictions for being hundreds of byte makes us totally unable to introduce this logic to the mask itself (otherwise we'd be able not to hook `Sleep` as well, leaving no IOCs just like commercial products do).
 
+Another argument might be, that commercial framework integrate these sorts of logic into their _Reflective Loaders_ and here we instead leave it in EXE harness.
+That's true, but the reason for such a decision is twofold:
+
+1. I need to be really careful with releasing this kind of technology to avoid the risk of helping weaponize the real-world criminals with an implementation that will haunt us back with another Petya. In that manner I decided to skip some of the gore details that I use in my professional tooling used to deliver commercial, contracted Adversary Simulation exercises. Giving out the seed hopefully will be met with community professionals able to grow the concept in their own toolings, assuming they'll have apropriate skills.
+
+2. I'd far prefer to move this entire logic to the [_User-Defined Reflective Loader_](https://www.cobaltstrike.com/help-user-defined-reflective-loader) of Cobalt Strike facilitating Red Team groups in elevated chances for their delivery phase. But firstly, see point (1), secondly that technology is currently limited to 5KBs size for their RDLLs, making me completely unable to implement it there as well. For those of us who build custom C2 & implants for in-house Adversary Simulation engagements - they now have received a sample implementation that will surely help them embellishing their tooling accordingly.
+
 
 ## How do I use it?
 
