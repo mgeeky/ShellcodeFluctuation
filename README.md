@@ -117,7 +117,7 @@ However, no `Abnormal private executable memory` IOC this time. Our fluctuation 
 
 And for the record, `pe-sieve` has no issues with our fluctuating shellcode as well:
 
-![pe-sieve](images/pe-sieve1.png)
+![pe-sieve](images/pe-sieve2.png)
 
 So we're able to see already that there are no clear references pointing back to our shellcode, at least memory IOC-wise. But what about that modified `kernel32` IOC?
 
