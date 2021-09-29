@@ -23,6 +23,9 @@ This PoC is a demonstration of rather simple technique, already known to the off
 ![comparison](images/comparison.png)
 
 
+This implementation along with my [ThreadStackSpoofer](https://github.com/mgeeky/ThreadStackSpoofer) brings Offensive Security community sample implementations to catch up on the offering made by commercial C2 products, so that we can do no worse in our Red Team toolings. 💪
+
+
 ### It's not a novel technique
 
 The technique is not brand new, nothing that I've devised myself. Merely an implementation showing the concept and its practical utilisation to let our Offensive Security community catch up on offering made by commercial C2 frameworks. 
