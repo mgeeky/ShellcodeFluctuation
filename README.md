@@ -23,10 +23,20 @@ Here's a comparison:
 ![comparison](images/comparison.png)
 
 
-**Notice:** The technique is not brand new, nothing that I've devised myself. Merely an implementation showing the concept and its practical utilisation to let our Offensive Security community catch up on offering made by commercial C2 frameworks. 
+### Notice
+
+The technique is not brand new, nothing that I've devised myself. Merely an implementation showing the concept and its practical utilisation to let our Offensive Security community catch up on offering made by commercial C2 frameworks. 
 
 Actually, I've been introduced to the idea of flipping shellcode's memory protection through the work of [**Josh Lospinoso**](https://github.com/JLospinoso) in his amazing [Gargoyle](https://github.com/JLospinoso/gargoyle).
 
+Here's more background:
+- [gargoyle, a memory scanning evasion technique](https://lospi.net/security/assembly/c/cpp/developing/software/2017/03/04/gargoyle-memory-analysis-evasion.html)
+- [Bypassing Memory Scanners with Cobalt Strike and Gargoyle](https://labs.f-secure.com/blog/experimenting-bypassing-memory-scanners-with-cobalt-strike-and-gargoyle/)
+
+**Gargoyle** takes the concept of self-aware and self-fluctuating shellcode a way further, by leveraging ROP sequence calling out to `VirtualProtect`. 
+However the technique is impressive, its equally hard to leverage it with Cobalt Strike's Beacon without having to kill its thread and keep re-initializing Beacon while in memory.
+
+That's far from perfect, however since we already operate from the grounds of our own self-injection loader process, we're able to do whatever we want with the environment in which shellcode operate and hide it however we like. This technique (and the previous one being [ThreadStackSpoofer](https://github.com/mgeeky/ThreadStackSpoofer)) shows advantages from running our shellcodes this way.
 
 
 ## How it works?
