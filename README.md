@@ -119,7 +119,14 @@ And for the record, `pe-sieve` also detects implanted PE when used with `/data 3
 
 ![pe-sieve](images/pe-sieve3.png)
 
-So we're able to see already that there are no clear references pointing back to our shellcode, at least memory IOC-wise. But what about that modified `kernel32` IOC?
+My current assumption is that PE-Sieve is picking up on the same traits that Moneta does (described below in _Modified code in kernel32.dll_) - the fact that PE mapped module has a non-empty Working set, being an evident fact of code injection of some sort.
+That is labeled as _Implanted PE_ / _Implanted_. If that's the case, conclusion is similar to the Moneta's observation. I don't think we should care that much about that IOC detection-wise.
+
+Currently I thought of no better option to intercept shellcode's execution in the middle (now speaking of Cobalt Strike), other than to hook `kernel32!Sleep`. Thus, we are bound to leave these sorts of IOCs.
+
+But hey, still none of the bytes differ compared to what is lying out there on the filesystem (`C:\Windows\System32\kernel32.dll`) and no function is hooked, what's the deal? 😉
+
+But what about that modified `kernel32` IOC?
 
 ### Modified code in kernel32.dll
 
