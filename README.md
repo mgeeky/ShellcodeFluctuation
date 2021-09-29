@@ -76,7 +76,7 @@ However, no `Abnormal private executable memory` IOC this time. Our fluctuation 
 
 And for the record, `pe-sieve` has no issues with our fluctuating shellcode as well:
 
-![pe-sieve](images/pe-sieve.png)
+![pe-sieve](images/pe-sieve0.png)
 
 So we're able to see already that there are no clear references pointing back to our shellcode, at least memory IOC-wise. But what about that modified `kernel32` IOC?
 
@@ -92,7 +92,7 @@ We dump code section of allegedly modified kernel32 and then we do the same for 
 
 Having acquired two dumps, we can then [compare them byte-wise](https://github.com/mgeeky/expdevBadChars) to look for any inconsitencies:
 
-![bindiff](images/bindiff.png)
+![bindiff](images/bindiff0.png)
 
 Just to see that they match one another. Clearly there isn't a single byte modified in `kernel32.dll` and the reason for that is because we're unhooking `kernel32!Sleep` before calling it out:
 
