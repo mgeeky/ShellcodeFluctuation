@@ -158,7 +158,7 @@ But hey, still none of the bytes differ compared to what is lying out there on t
 C:\> ShellcodeFluctuation.exe beacon64.bin 2
 ```
 
-![no-access](images/no-accecss.png)
+![no-access](images/no-access.png)
 
 That will cause the shellcode to fluctuate between `RX` and `NA` pages effectively:
 
