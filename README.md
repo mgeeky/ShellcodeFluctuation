@@ -49,7 +49,8 @@ ORCA showed that:
 2. flip shellcode's pages to no-access
 3. and then catch Access Violation exceptions that will occur as soon as the shellcode wants to resume its execution and decrypt + flip its memory pages back to Read+Execute.
 
-This implementation contains this idea implemented, available with option `2` in `<fluctuate>`.
+This implementation contains this idea implemented, available with option `2` in `<fluctuate>`. 
+Be sure to check out other his projects as well.
 
 ---
 
@@ -163,7 +164,7 @@ But hey, still none of the bytes differ compared to what is lying out there on t
 C:\> ShellcodeFluctuation.exe beacon64.bin 2
 ```
 
-![no-access](images/no-access.png)
+![no-access](images/no-access1.png)
 
 That will cause the shellcode to fluctuate between `RX` and `NA` pages effectively:
 
