@@ -1,7 +1,7 @@
 # Shellcode Fluctuation PoC
 
-A PoC implementation for an another in-memory evasion technique that cyclically encrypts and decrypts shellcode's contents to then make it fluctuate between `RW` and `RX` memory protection.
-When our shellcode resides in `RW` memory pages, scanners such as [`Moneta`](https://github.com/forrest-orr/moneta) or [`pe-sieve`](https://github.com/hasherezade/pe-sieve) will be unable to track it down and dump it for further analysis.
+A PoC implementation for an another in-memory evasion technique that cyclically encrypts and decrypts shellcode's contents to then make it fluctuate between `RW` (or `NoAccess`) and `RX` memory protection.
+When our shellcode resides in `RW` or `NoAccess` memory pages, scanners such as [`Moneta`](https://github.com/forrest-orr/moneta) or [`pe-sieve`](https://github.com/hasherezade/pe-sieve) will be unable to track it down and dump it for further analysis.
 
 ## Intro
 
