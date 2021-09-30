@@ -15,7 +15,7 @@ Questions proven otherwise so I decided to release this unweaponized PoC to docu
 This PoC is a demonstration of rather simple technique, already known to the offensive community (so I'm not bringin anything new here really) in hope to disclose secrecy behind magic showed by some commercial frameworks that demonstrate their evasion capabilities targeting both aforementioned memory scanners.
 
 
-**Here's a comparison:**
+**Here's a comparison when fluctuating to RW** (another option is to fluctuate to `PAGE_NOACCESS` - described below):
 
 1. Beacon not encrypted
 2. **Beacon encrypted** (_fluctuating_)
@@ -41,6 +41,15 @@ However the technique is impressive, its equally hard to leverage it with Cobalt
 
 That's far from perfect, however since we already operate from the grounds of our own self-injection loader process, we're able to do whatever we want with the environment in which shellcode operate and hide it however we like. This technique (and the previous one being [ThreadStackSpoofer](https://github.com/mgeeky/ThreadStackSpoofer)) shows advantages from running our shellcodes this way.
 
+The implementation of fluctuating to `PAGE_NOACCESS` is inspired by [ORCA666](https://github.com/ORCA666)'s work presented in his https://github.com/ORCA666/0x41 injector.
+ORCA showed that:
+
+1. we can initialize a vectored exception handler (VEH), 
+2. flip shellcode's pages to no-access
+3. and then catch Access Violation exceptions that will occur as soon as the shellcode wants to resume its execution and decrypt + flip its memory pages back to Read+Execute.
+
+This implementation contains this idea implemented, available with option `2` in `<fluctuate>`.
+
 
 ## How it works?
 
@@ -49,7 +58,7 @@ When shellcode runs (this implementation specifically targets Cobalt Strike Beac
 Whenever hooked `MySleep` function gets invoked, it will localise its memory allocation boundaries, flip their protection to `RW` and `xor32` all the bytes stored there. 
 Having awaited for expected amount of time, when shellcode gets back to our `MySleep` handler, we'll decrypt shellcode's data and flip protection back to `RX`.
 
-The rough algorithm is following:
+Fluctuation to `PAGE_READWRITE` works as follows:
 
 1. Read shellcode's contents from file.
 2. Hook `kernel32!Sleep` pointing back to our callback.
@@ -59,6 +68,20 @@ The rough algorithm is following:
 5. We then unhook original `kernel32!Sleep` to avoid leaving simple IOC in memory pointing that `Sleep` have been trampolined (in-line hooked).
 5. A call to original `::Sleep` is made to let the Beacon's sleep while waiting for further communication.
 11. After Sleep is finished, we decrypt our shellcode's data, flip it memory protections back to `RX` and then re-hook `kernel32!Sleep` to ensure interception of subsequent sleep.
+
+Fluctuation to `PAGE_NOACCESS` works as follows (do note that the idea was borrowed from _ORCA666_'s [0x41](https://github.com/ORCA666/0x41) project):
+
+1. Read shellcode's contents from file.
+2. Hook `kernel32!Sleep` pointing back to our callback.
+3. Inject and launch shellcode via `VirtualAlloc` + `memcpy` + `CreateThread` ...
+4. Initialize Vectored Exception Handler (VEH) to setup our own handler that will catch _Access Violation_ exceptions.
+5. As soon as Beacon attempts to sleep, our `MySleep` callback gets invoked.
+6. Beacon's memory allocation gets encrypted and protection flipped to `PAGE_NOACCESS`
+7. We then unhook original `kernel32!Sleep` to avoid leaving simple IOC in memory pointing that `Sleep` have been trampolined (in-line hooked).
+8. A call to original `::Sleep` is made to let the Beacon's sleep while waiting for further communication.
+9. After Sleep is finished, we re-hook `kernel32!Sleep` to ensure interception of subsequent sleep.
+10. Shellcode then attempts to resume its execution which results in Access Violation being throwed since its pages are marked NoAccess.
+11. Our VEH Handler catches the exception, decrypts and flips memory protections back to `RX` and shellcode's is resumed.
 
 
 ## Demo
@@ -70,7 +93,8 @@ Usage: ShellcodeFluctuation.exe <shellcode> <fluctuate>
 <fluctuate>:
         -1 - Read shellcode but dont inject it. Run in an infinite loop.
         0 - Inject the shellcode but don't hook kernel32!Sleep and don't encrypt anything
-        1 - Inject shellcode and start fluctuating its memory.
+        1 - Inject shellcode and start fluctuating its memory with standard PAGE_READWRITE.
+        2 - Inject shellcode and start fluctuating its memory with ORCA666's PAGE_NOACCESS.
 ```
 
 ### Moneta (seemingly) False Positive
@@ -102,7 +126,7 @@ The second use case presents Memory IOCs of a Beacon operating within our proces
 We can see that `Moneta64` correctly recognizes `Abnormal private executable memory` pointing at the location where our shellcode resides. 
 That's really strong Memory IOC exposing our shellcode for getting dumped and analysed by automated scanners. Not cool.
 
-### Encrypted Beacon
+### Encrypted Beacon with RW protections
 
 ```
 C:\> ShellcodeFluctuation.exe beacon64.bin 1
@@ -126,9 +150,55 @@ Currently I thought of no better option to intercept shellcode's execution in th
 
 But hey, still none of the bytes differ compared to what is lying out there on the filesystem (`C:\Windows\System32\kernel32.dll`) and no function is hooked, what's the deal? 😉
 
-But what about that modified `kernel32` IOC?
+
+
+### Encrypted Beacon with PAGE_NOACCESS protections
+
+```
+C:\> ShellcodeFluctuation.exe beacon64.bin 2
+```
+
+That will cause the shellcode to fluctuate between `RX` and `NA` pages effectively:
+
+```
+C:\> ShellcodeFluctuation.exe beacon64.bin 2
+[.] Reading shellcode bytes...
+[.] Hooking kernel32!Sleep...
+
+[.] Initializing VEH Handler to intercept invalid memory accesses due to PAGE_NOACCESS.
+    This is a re-implementation of ORCA666's work presented in his https://github.com/ORCA666/0x41 project.
+
+[.] Injecting shellcode...
+[+] Shellcode is now running. PID = 45312
+[+] Fluctuation initialized.
+    Shellcode resides at 0x00000147EE811000 and occupies 176128 bytes. XOR32 key: 0x0bd4bcf7
+
+[>] Flipped to RW.
+[>] Encoding...
+[>] Flipped to No Access.
+
+
+===> MySleep(5000)
+
+[.] Access Violation occured at 0x147ee83bd51
+[+] Shellcode wants to Run. Restoring to RX and Decrypting
+
+[>] Flipped to RW.
+[<] Decoding...
+[<] Flipped to RX.
+
+[>] Flipped to RW.
+[>] Encoding...
+[>] Flipped to No Access.
+
+```
+
+At the moment I'm not sure of benefits for flipping into `PAGE_NOACCESS` instead of `PAGE_READWRITE`. 
+
 
 ### Modified code in kernel32.dll
+
+So what about that modified `kernel32` IOC?
 
 Now, let us attempt to get to the bottom of this IOC and see what's the deal here.
 

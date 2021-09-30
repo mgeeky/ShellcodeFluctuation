@@ -10,13 +10,25 @@ typedef void  (WINAPI* typeSleep)(
     DWORD dwMilis
     );
 
+typedef DWORD(NTAPI* typeNtFlushInstructionCache)(
+    HANDLE ProcessHandle,
+    PVOID BaseAddress,
+    ULONG NumberOfBytesToFlush
+    );
+
 typedef std::unique_ptr<std::remove_pointer<HANDLE>::type, decltype(&::CloseHandle)> HandlePtr;
+
+enum TypeOfFluctuation
+{
+    NoFluctuation = 0,
+    FluctuateToRW,
+    FluctuateToNA,      // ORCA666's delight: https://github.com/ORCA666/0x41
+};
 
 struct FluctuationMetadata
 {
     LPVOID shellcodeAddr;
     SIZE_T shellcodeSize;
-    DWORD protect;
     bool currentlyEncrypted;
     DWORD encodeKey;
 };
