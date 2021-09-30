@@ -158,6 +158,8 @@ But hey, still none of the bytes differ compared to what is lying out there on t
 C:\> ShellcodeFluctuation.exe beacon64.bin 2
 ```
 
+![no-access](images/no-accecss.png)
+
 That will cause the shellcode to fluctuate between `RX` and `NA` pages effectively:
 
 ```
@@ -193,7 +195,7 @@ C:\> ShellcodeFluctuation.exe beacon64.bin 2
 
 ```
 
-At the moment I'm not sure of benefits for flipping into `PAGE_NOACCESS` instead of `PAGE_READWRITE`. 
+At the moment I'm not sure of benefits of flipping into `PAGE_NOACCESS` instead of `PAGE_READWRITE`. 
 
 
 ### Modified code in kernel32.dll
