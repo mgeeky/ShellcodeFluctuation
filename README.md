@@ -166,40 +166,7 @@ C:\> ShellcodeFluctuation.exe beacon64.bin 2
 
 ![no-access](images/no-access1.png)
 
-That will cause the shellcode to fluctuate between `RX` and `NA` pages effectively:
-
-```
-C:\> ShellcodeFluctuation.exe beacon64.bin 2
-[.] Reading shellcode bytes...
-[.] Hooking kernel32!Sleep...
-
-[.] Initializing VEH Handler to intercept invalid memory accesses due to PAGE_NOACCESS.
-    This is a re-implementation of ORCA666's work presented in his https://github.com/ORCA666/0x41 project.
-
-[.] Injecting shellcode...
-[+] Shellcode is now running. PID = 45312
-[+] Fluctuation initialized.
-    Shellcode resides at 0x00000147EE811000 and occupies 176128 bytes. XOR32 key: 0x0bd4bcf7
-
-[>] Flipped to RW.
-[>] Encoding...
-[>] Flipped to No Access.
-
-
-===> MySleep(5000)
-
-[.] Access Violation occured at 0x147ee83bd51
-[+] Shellcode wants to Run. Restoring to RX and Decrypting
-
-[>] Flipped to RW.
-[<] Decoding...
-[<] Flipped to RX.
-
-[>] Flipped to RW.
-[>] Encoding...
-[>] Flipped to No Access.
-
-```
+That will cause the shellcode to fluctuate between `RX` and `NA` pages effectively.
 
 At the moment I'm not sure of benefits of flipping into `PAGE_NOACCESS` instead of `PAGE_READWRITE`. 
 
