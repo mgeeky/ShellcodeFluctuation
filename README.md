@@ -25,6 +25,7 @@ This PoC is a demonstration of rather simple technique, already known to the off
 
 This implementation along with my [ThreadStackSpoofer](https://github.com/mgeeky/ThreadStackSpoofer) brings Offensive Security community sample implementations to catch up on the offering made by commercial C2 products, so that we can do no worse in our Red Team toolings. 💪
 
+---
 
 ### It's not a novel technique
 
@@ -50,6 +51,7 @@ ORCA showed that:
 
 This implementation contains this idea implemented, available with option `2` in `<fluctuate>`.
 
+---
 
 ## How it works?
 
@@ -58,7 +60,7 @@ When shellcode runs (this implementation specifically targets Cobalt Strike Beac
 Whenever hooked `MySleep` function gets invoked, it will localise its memory allocation boundaries, flip their protection to `RW` and `xor32` all the bytes stored there. 
 Having awaited for expected amount of time, when shellcode gets back to our `MySleep` handler, we'll decrypt shellcode's data and flip protection back to `RX`.
 
-Fluctuation to `PAGE_READWRITE` works as follows:
+### Fluctuation to `PAGE_READWRITE` works as follows
 
 1. Read shellcode's contents from file.
 2. Hook `kernel32!Sleep` pointing back to our callback.
@@ -69,7 +71,9 @@ Fluctuation to `PAGE_READWRITE` works as follows:
 5. A call to original `::Sleep` is made to let the Beacon's sleep while waiting for further communication.
 11. After Sleep is finished, we decrypt our shellcode's data, flip it memory protections back to `RX` and then re-hook `kernel32!Sleep` to ensure interception of subsequent sleep.
 
-Fluctuation to `PAGE_NOACCESS` works as follows (do note that the idea was borrowed from _ORCA666_'s [0x41](https://github.com/ORCA666/0x41) project):
+### Fluctuation to `PAGE_NOACCESS` works as follows
+
+(do note that the idea was borrowed from _ORCA666_'s [0x41](https://github.com/ORCA666/0x41) project):
 
 1. Read shellcode's contents from file.
 2. Hook `kernel32!Sleep` pointing back to our callback.
@@ -83,6 +87,7 @@ Fluctuation to `PAGE_NOACCESS` works as follows (do note that the idea was borro
 10. Shellcode then attempts to resume its execution which results in Access Violation being throwed since its pages are marked NoAccess.
 11. Our VEH Handler catches the exception, decrypts and flips memory protections back to `RX` and shellcode's is resumed.
 
+---
 
 ## Demo
 
@@ -284,6 +289,7 @@ That's true, but the reason for such a decision is twofold:
 
 2. I'd far prefer to move this entire logic to the [_User-Defined Reflective Loader_](https://www.cobaltstrike.com/help-user-defined-reflective-loader) of Cobalt Strike facilitating Red Team groups in elevated chances for their delivery phase. But firstly, see point (1), secondly that technology is currently limited to 5KBs size for their RDLLs, making me completely unable to implement it there as well. For those of us who build custom C2 & implants for in-house Adversary Simulation engagements - they now have received a sample implementation that will surely help them embellishing their tooling accordingly.
 
+---
 
 ## How do I use it?
 
@@ -297,6 +303,7 @@ While developing your advanced shellcode loader, you might also want to implemen
 - **Clear out any leftovers from Reflective Loader** to avoid in-memory signatured detections
 - **Unhook everything you might have hooked** (such as AMSI, ETW, WLDP) before sleeping and then re-hook afterwards.
 
+---
 
 ## Example run
 
@@ -307,7 +314,8 @@ Usage: ShellcodeFluctuation.exe <shellcode> <fluctuate>
 <fluctuate>:
         -1 - Read shellcode but dont inject it. Run in an infinite loop.
         0 - Inject the shellcode but don't hook kernel32!Sleep and don't encrypt anything
-        1 - Inject shellcode and start fluctuating its memory.
+        1 - Inject shellcode and start fluctuating its memory with standard PAGE_READWRITE.
+        2 - Inject shellcode and start fluctuating its memory with ORCA666's PAGE_NOACCESS.
 ```
 
 Where:
@@ -336,6 +344,8 @@ C:\> ShellcodeFluctuation.exe ..\..\tests\beacon64.bin 1
 
 ===> MySleep(5000)
 ```
+
+---
 
 ## Word of caution
 
