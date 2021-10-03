@@ -37,7 +37,7 @@ void WINAPI MySleep(DWORD dwMilliseconds)
     // We leverage the fact that the return address left on the stack will make the thread
     // get back to our handler anyway.
     //
-    fastTrampoline(false, (BYTE*)::Sleep, &MySleep, &buffers);
+    fastTrampoline(false, (BYTE*)::Sleep, (void*)&MySleep, &buffers);
 
     // Perform sleep emulating originally hooked functionality.
     ::Sleep(dwMilliseconds);
@@ -61,7 +61,7 @@ void WINAPI MySleep(DWORD dwMilliseconds)
     //
     // Re-hook kernel32!Sleep
     //
-    fastTrampoline(true, (BYTE*)::Sleep, &MySleep);
+    fastTrampoline(true, (BYTE*)::Sleep, (void*)&MySleep);
 }
 
 std::vector<MEMORY_BASIC_INFORMATION> collectMemoryMap(HANDLE hProcess, DWORD Type)
@@ -268,7 +268,7 @@ bool hookSleep()
 
     g_hookedSleep.origSleep = reinterpret_cast<typeSleep>(::Sleep);
 
-    if (!fastTrampoline(true, (BYTE*)::Sleep, &MySleep, &buffers))
+    if (!fastTrampoline(true, (BYTE*)::Sleep, (void*)&MySleep, &buffers))
         return false;
 
     return true;
