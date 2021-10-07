@@ -166,7 +166,8 @@ bool isShellcodeThread(LPVOID address)
         {
             const DWORD expectedProtection = (g_fluctuate == FluctuateToRW) ? PAGE_READWRITE : PAGE_NOACCESS;
 
-            return ((mbi.Protect & Shellcode_Memory_Protection)
+            return ((mbi.Protect & PAGE_EXECUTE_READ) 
+                || (mbi.Protect & PAGE_EXECUTE_READWRITE)
                 || (mbi.Protect & expectedProtection));
         }
     }
