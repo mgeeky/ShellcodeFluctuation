@@ -166,7 +166,8 @@ bool isShellcodeThread(LPVOID address)
         {
             const DWORD expectedProtection = (g_fluctuate == FluctuateToRW) ? PAGE_READWRITE : PAGE_NOACCESS;
 
-            return ((mbi.Protect & Shellcode_Memory_Protection)
+            return ((mbi.Protect & PAGE_EXECUTE_READ) 
+                || (mbi.Protect & PAGE_EXECUTE_READWRITE)
                 || (mbi.Protect & expectedProtection));
         }
     }
@@ -290,7 +291,7 @@ void shellcodeEncryptDecrypt(LPVOID callerAddress)
                 g_fluctuationData.shellcodeAddr,
                 g_fluctuationData.shellcodeSize,
                 PAGE_READWRITE,
-                &oldProt
+                &g_fluctuationData.protect
             );
 
             log("[>] Flipped to RW.");
@@ -329,11 +330,11 @@ void shellcodeEncryptDecrypt(LPVOID callerAddress)
             ::VirtualProtect(
                 g_fluctuationData.shellcodeAddr,
                 g_fluctuationData.shellcodeSize,
-                Shellcode_Memory_Protection,
+                g_fluctuationData.protect,
                 &oldProt
             );
 
-            log("[<] Flipped to RX.\n");
+            log("[<] Flipped back to RX/RWX.\n");
         }
 
         g_fluctuationData.currentlyEncrypted = !g_fluctuationData.currentlyEncrypted;

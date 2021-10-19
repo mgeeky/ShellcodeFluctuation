@@ -31,6 +31,7 @@ struct FluctuationMetadata
     SIZE_T shellcodeSize;
     bool currentlyEncrypted;
     DWORD encodeKey;
+    DWORD protect;
 };
 
 struct HookedSleep
